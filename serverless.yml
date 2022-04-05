@@ -1,0 +1,32 @@
+service: lambdas3
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${file(config.json):STAGE}
+  region: ${file(config.json):REGION}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:GetObjectVersion"
+      Resource:
+        - "arn:aws:s3:::{file(config.json):S3_BUCKET}/*"
+
+functions:
+  uploader:
+    handler: handler.readS3File
+    events:
+      - s3:
+          bucket: ${file(config.json):S3_BUCKET}
+          event: s3:ObjectCreated:*
+          existing: true
+
+resources:
+  Resources:
+    lambdaS3:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${file(config.json):S3_BUCKET}
